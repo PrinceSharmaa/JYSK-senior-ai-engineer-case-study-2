@@ -1,238 +1,236 @@
 # SheetPilot AI
+### Agentic Excel Assistant | JYSK Senior AI Engineer Case Study — Task 2
 
-**An agentic spreadsheet assistant | JYSK Senior AI Engineer take-home case study**
+SheetPilot AI is a conversational Excel assistant that allows users to **analyze, visualize, and modify Excel workbooks using natural language**.
 
-SheetPilot AI enables users to inspect, analyze, and modify spreadsheets through natural-language instructions. It combines **Google Gemini** for planning, **LangGraph** for workflow orchestration, **FastAPI** for application services, and **Streamlit** for a conversational interface. Spreadsheet changes are performed by deterministic, validated Python tools rather than arbitrary model-generated code.
+It combines **Google Gemini, LangGraph, FastAPI, Streamlit, and Python-based Excel tools** to transform user instructions into validated spreadsheet operations.
 
-> **Project status:** Functional local prototype. The developer reported **110 passing automated tests**. This README describes the supplied implementation and reported results; it does not claim independent verification of the entire local repository or production readiness.
+The key design principle is simple: **the LLM decides what to do, while deterministic Python tools perform the actual workbook operations.**
 
-## Features
+## 1. Key Features
 
-- **Conversational spreadsheet operations:** Ask for workbook structure, sheet previews, and data insights.
-- **Excel automation:** Create calculated columns, apply formulas, format cells, and generate charts.
-- **Follow-up context:** Refer to previously discussed columns or operations within the same conversation.
-- **Persistent workbook edits:** Subsequent requests operate on the latest saved workbook output.
-- **Structured planning and validation:** Gemini produces tool plans that are validated before execution.
-- **Failure recovery:** Invalid plans and failed executions can trigger bounded retries and replanning.
-- **Transactional execution:** Tools operate on a workbook copy; failed attempts do not commit partial edits.
-- **Observability:** Structured traces record planning, validation, and execution timings, retry counts, and tool outcomes.
-- **Downloadable results:** Retrieve the updated `.xlsx` workbook from the UI.
+### Conversational Excel Assistant
+- Upload Excel workbooks and interact through natural-language chat.
+- Explore worksheets, columns, data types, and sample records.
+- Ask analytical questions and receive contextual responses.
+- Maintain conversation context for follow-up instructions.
+- Display clickable, file-aware suggested questions after upload.
 
-## Technology stack
+### Excel Editing & Automation — Phase 8.3
+- Create, rename, and manage worksheets.
+- Add, update, and delete rows or columns.
+- Find and replace values.
+- Filter and manipulate spreadsheet data.
+- Create calculated columns and apply Excel formulas.
+- Apply formatting and perform supported workbook transformations.
+- Save changes and download the updated Excel file.
 
-| Layer | Technology | Responsibility |
-| --- | --- | --- |
-| Frontend | Streamlit | Chat, upload, preview, execution details, download |
-| API | FastAPI + Pydantic | HTTP endpoints and request validation |
-| Agent orchestration | LangGraph | Planner → validator → executor; retry routing |
-| LLM | Google Gemini (`google-genai`) | Generate structured plans and user-facing explanations |
-| Spreadsheet operations | openpyxl, pandas | Workbook edits, tabular inspection, previews |
-| State | Conversation memory + local workbook storage | Follow-up context and latest-workbook selection |
-| Quality | pytest | Automated tests |
-| Monitoring | Python structured logging | Request-level and stage-level traces |
+### Interactive Visualization — Phase 8.1
+- Generate charts and plots through natural-language instructions.
+- Display visualizations directly inside the Streamlit conversation.
+- Embed supported charts into downloadable Excel workbooks.
+- Explore spreadsheet data visually without writing code.
 
-## Architecture
+### Workbook Safety & Versioning
+- Preserve workbook changes across multiple instructions.
+- Maintain workbook versions for recovery.
+- **Undo** previous changes.
+- **Restore** an earlier workbook version.
+- Execute operations on a workbook copy to prevent partially committed changes.
 
-![SheetPilot AI system architecture](docs/architecture.svg)
+### Agent Reliability
+- Structured LLM-generated execution plans.
+- Tool argument validation before execution.
+- Automatic replanning and bounded retries.
+- Conversation-aware execution.
+- Structured logging for execution outcomes, failures, and latency.
 
-The editable Mermaid version is available at [`docs/architecture.md`](docs/architecture.md). The architecture separates **probabilistic planning** from **validated, deterministic execution**.
+## 2. Technology Stack
 
-### Request lifecycle
+| Component | Technology |
+|---|---|
+| LLM | Google Gemini |
+| Agent orchestration | LangGraph |
+| Backend API | FastAPI, Pydantic |
+| Frontend | Streamlit |
+| Excel processing | openpyxl, pandas |
+| Visualization | Python charting tools |
+| State management | Conversation memory, workbook versioning |
+| Testing | pytest |
+| Observability | Structured Python logging |
 
-1. **Upload:** Streamlit sends the spreadsheet to `POST /api/upload`. FastAPI stores the uploaded file and returns a file identifier.
-2. **Ask:** The user submits an instruction through the chat interface. Streamlit sends `file_id` and `instruction` to `POST /api/agent/run`.
-3. **Load context:** The backend retrieves the latest workbook and conversation history, then prepares workbook metadata for the planner.
-4. **Plan:** Gemini returns a structured action plan using the supported tool definitions.
-5. **Validate:** Pydantic-based schemas and tool-specific argument validation check the proposed actions. Invalid plans can be replanned within configured retry limits.
-6. **Execute:** LangGraph routes validated actions to the Excel tool registry. Execution uses a cloned workbook; failed attempts can be replanned without committing partial changes.
-7. **Persist:** On success, the backend saves the updated workbook and records conversation context.
-8. **Respond:** A natural-language explanation is generated and returned to Streamlit. The updated file is available for download.
-9. **Observe:** Structured traces capture the agent outcome, tool successes/failures, retry counts, and stage durations.
+## 3. System Architecture
 
-## Repository structure
+![SheetPilot AI Architecture](docs/architecture.svg)
 
-Representative structure based on the supplied code; additional local modules and tests may be present.
+The agent follows a controlled execution workflow:
 
 ```text
-jysk-excel-ai-agent/
-├── backend/
-│   ├── app/
-│   │   ├── main.py                    # FastAPI endpoints
-│   │   ├── agents/
-│   │   │   ├── excel_agent.py         # LangGraph orchestration and retries
-│   │   │   ├── agent_schemas.py       # Structured plan/result schemas
-│   │   │   ├── tool_validation.py     # Tool argument validation
-│   │   │   └── response_generator.py  # Natural-language explanations
-│   │   └── services/
-│   │       ├── file_storage.py        # Uploaded and generated workbooks
-│   │       ├── workbook_transaction.py# Clone-before-execute safety
-│   │       ├── conversation_memory.py # Conversation history
-│   │       └── agent_observability.py # Structured execution tracing
-│   ├── tests/                       # pytest suite
-│   └── storage/uploads/             # Runtime files (do not commit)
-├── frontend/
-│   └── app.py                        # Streamlit UI
-├── docs/
-│   ├── architecture.md              # Mermaid source
-│   ├── architecture.svg             # Architecture diagram
-│   └── architecture.png             # Preview image
-├── .env                              # Local secrets (do not commit)
-└── README.md
+                    USER
+                     |
+             Streamlit Chat UI
+                     |
+             FastAPI Backend
+                     |
+              LangGraph Agent
+                     |
+              Gemini Planner
+                     |
+             Plan Validation
+                     |
+             Excel Tool Registry
+                     |
+         Deterministic Python Tools
+                     |
+          Updated Excel Workbook
+                     |
+          Versioning & Persistence
+                     |
+       Response + Charts + Download
 ```
 
-## Getting started
+### How It Works
+
+1. **Upload:** The user uploads an Excel workbook through Streamlit.
+2. **Understand:** The backend extracts workbook metadata and conversation context.
+3. **Plan:** Gemini generates a structured plan using supported Excel tools.
+4. **Validate:** Pydantic schemas and tool-specific checks validate the proposed actions.
+5. **Execute:** LangGraph invokes deterministic Python tools.
+6. **Recover:** Invalid plans or failed operations can trigger bounded retries.
+7. **Persist:** Successful changes are saved, with workbook history supporting Undo and Restore.
+8. **Respond:** The user receives an explanation, updated workbook, and visualizations when requested.
+
+**Why this architecture?**
+
+It separates flexible AI reasoning from controlled execution, improving reliability, maintainability, and transparency.
+
+## 4. Example Use Cases
+
+After uploading an Excel workbook, users can ask:
+
+**Data exploration**
+> Show me the available worksheets and their columns.
+
+**Data analysis**
+> Calculate total revenue by product category.
+
+**Excel automation**
+> Create a Revenue column using Quantity multiplied by Unit Price.
+
+**Data manipulation**
+> Find and replace missing category values with "Unknown".
+
+**Visualization**
+> Create a bar chart showing revenue by category.
+
+**Workbook management**
+> Undo my last change.
+
+> Restore the previous workbook version.
+
+The assistant processes these requests through its supported tools and returns results within the conversation.
+
+## 5. Getting Started
 
 ### Prerequisites
 
-- Python **3.12**
-- A valid Google Gemini API key
-- Project dependencies installed according to the repository's existing `pyproject.toml` / lockfile or requirements file
+- Python 3.12
+- Google Gemini API key
+- `uv` package manager
 
-### 1. Clone and enter the project
+### Installation
+
+Clone the repository:
 
 ```bash
-git clone <YOUR_REPOSITORY_URL>
-cd jysk-excel-ai-agent
+git clone https://github.com/PrinceSharmaa/JYSK-senior-ai-engineer-case-study-2.git
+
+cd JYSK-senior-ai-engineer-case-study-2
 ```
 
-### 2. Create an environment and install dependencies
-
-If the repository uses **uv**:
+Install dependencies:
 
 ```bash
 uv sync
 ```
 
-Otherwise, use the project's existing dependency manifest and a Python 3.12 virtual environment. **Do not substitute an incomplete package list for the project's lockfile.**
+### Environment Configuration
 
-### 3. Configure environment variables
+Create a `.env` file in the project root:
 
-Create `.env` in the project root and use the **exact Gemini key variable expected by `backend/app`** (check your existing configuration helper):
-
-```dotenv
-# Set the variable name used by your Gemini client configuration.
-# Example only; verify against the code before running:
-GEMINI_API_KEY=your_api_key_here
+```env
+GEMINI_API_KEY=your_gemini_api_key
 BACKEND_URL=http://127.0.0.1:8000
 ```
 
-Never commit `.env`, API keys, or uploaded spreadsheets.
+Never commit API keys or `.env` files.
 
-### 4. Start FastAPI
-
-Run from the project root, using the project's environment:
+### Start the Backend
 
 ```bash
-python -m uvicorn backend.app.main:app --reload --port 8000
+uv run python -m uvicorn backend.app.main:app --reload --port 8000
 ```
 
-API documentation is available locally at `http://127.0.0.1:8000/docs`; the health endpoint is `GET /health`.
+API documentation is available at `http://127.0.0.1:8000/docs`.
 
-### 5. Start Streamlit
+### Start the Frontend
 
-In a second terminal:
+Open another terminal:
 
 ```bash
-streamlit run frontend/app.py
+uv run streamlit run frontend/app.py
 ```
 
-Open the local URL printed by Streamlit (typically port 8501).
+Open the local Streamlit URL displayed in your terminal.
 
-## Example workflow
+## 6. Testing & Reliability
 
-Upload a sample workbook with **Product**, **Quantity**, and **Unit Price** columns, then try:
+The project includes automated tests covering:
 
-1. `List all columns in the workbook.`
-2. `Create a Revenue column by multiplying Quantity and Unit Price.`
-3. `Format that column as currency.`
-4. `Create a bar chart showing Revenue by Product.`
-5. `List all columns again.`
+- Agent planning and validation
+- Excel tool execution
+- API behavior
+- Workbook persistence
+- Transactional execution
+- Error handling and recovery
+- Observability
+- Workbook versioning and restoration
 
-Download the resulting workbook to inspect the generated formula column and chart. Supported operations depend on the tool registry and the workbook's actual layout.
-
-## API overview
-
-| Method | Route | Purpose |
-| --- | --- | --- |
-| `GET` | `/health` | Backend health check |
-| `POST` | `/api/upload` | Upload a spreadsheet |
-| `POST` | `/api/agent/run` | Execute a natural-language instruction |
-| `GET` | `/api/files/{file_id}` | Download a stored workbook |
-
-Example agent request (after a successful upload):
-
-```json
-{
-  "file_id": "<file-id-from-upload>",
-  "instruction": "Create a Revenue column by multiplying Quantity and Unit Price"
-}
-```
-
-## Reliability and safety
-
-**Structured tool interface.** The planner selects from registered operations; generated actions are validated before execution. This limits unsupported arguments and separates LLM decisions from direct workbook mutations.
-
-**Bounded self-correction.** The supplied LangGraph agent defines `MAX_PLAN_RETRIES = 2` and `MAX_EXECUTION_RETRIES = 2`, allowing up to three attempts per retry loop (initial attempt plus two retries). Recovery is best-effort, not a guarantee that every instruction can succeed.
-
-**Transactional workbook changes.** Operations execute on a cloned workbook. The updated workbook is saved only after successful execution, reducing the risk of partial changes.
-
-**Input and deployment boundaries.** This is a local case-study prototype, not a multi-tenant production service. Authentication, per-user authorization, upload limits, file scanning, retention policies, and secure cloud storage would be necessary for production.
-
-## Observability
-
-The agent records structured execution metrics such as:
-
-- `success`, `duration_ms`
-- `planner_attempts`, `validation_failures`
-- `execution_attempts`, `execution_failures`
-- `tool_successes`, `tool_failures`
-- `stage_ms` (planner, validator, executor)
-
-**Observed example (one local run):**
-
-| Metric | Value |
-| --- | ---: |
-| Agent execution time | 1,486.75 ms |
-| Planner | 1,468.82 ms |
-| Validator | 0.40 ms |
-| Executor | 8.68 ms |
-| Planning attempts | 1 |
-| Execution failures | 0 |
-
-In that run, planning represented approximately **98.8% of measured agent execution time**. The trace measures the instrumented agent execution, **not necessarily total API latency**, because workbook saving and a separate natural-language explanation call can occur afterward. Logs are currently the monitoring surface; a persistent metrics backend and visual dashboard are future enhancements.
-
-## Testing
-
-Run from the repository root:
+Run the tests:
 
 ```bash
-python -m pytest backend/tests -q
+uv run python -m pytest backend/tests -q
 ```
 
-**Reported result:** 110 tests passed in the developer's local environment. The suite covers agent behavior and validation, API behavior, workbook persistence/transactions, recovery, and observability. The exact breakdown and live-LLM coverage should be checked against the final repository and test report; passing tests alone do not establish LLM accuracy or production readiness.
+**Local test result: 110 tests passed.**
 
-For a final submission, capture the test command and its output (or a CI run) so reviewers can reproduce the result.
+The application also uses bounded retries and structured execution logs to support debugging and recovery.
 
-## Design trade-offs and limitations
+## 7. Engineering Decisions
 
-| Decision | Benefit | Limitation / next step |
-| --- | --- | --- |
-| Gemini planning + deterministic tools | Flexible language interface with constrained actions | LLM plans still require validation and evaluation |
-| LangGraph retries | Recovery from some invalid plans and tool errors | Bounded retries cannot solve every failure |
-| Local file storage | Simple, reproducible prototype | Move to durable, access-controlled object storage |
-| In-process conversation history | Easy follow-up interactions | Use persistent, session-isolated storage in production |
-| openpyxl workbook edits | Fine-grained Excel control | Formula calculation/cached results may require Excel or another calculation engine |
-| Structured logs | Diagnose failures and latency | Add durable tracing, dashboards, alerts, and cost monitoring |
-| Streamlit UI | Fast iteration and demonstration | Add accessibility, user management, and richer UI tests |
+| Design Decision | Reason |
+|---|---|
+| Gemini for planning | Understands natural-language spreadsheet instructions |
+| LangGraph orchestration | Provides controlled execution and retry workflows |
+| Structured tool calls | Reduces unsupported or invalid operations |
+| Deterministic Excel tools | Makes workbook modifications predictable |
+| Transactional execution | Avoids committing partially failed changes |
+| Workbook versioning | Supports Undo and Restore |
+| Interactive charts | Makes analytical results immediately accessible |
+| FastAPI + Streamlit | Separates backend logic from the user interface |
 
-## Future improvements
+## 8. Limitations & Future Improvements
 
-1. **End-to-end evaluation dataset:** Representative spreadsheet tasks scored for correctness, tool selection, and recovery behavior.
-2. **Durable state and secure tenancy:** Database-backed conversations and authenticated, isolated workbook storage.
-3. **Production monitoring:** Persist traces; measure full request latency, model token usage, cost, and failure rates.
-4. **Deployment hardening:** Containerization, CI/CD, rate limiting, secrets management, and upload security.
-5. **Spreadsheet validation:** More complex workbooks, formula recalculation, and compatibility checks.
+SheetPilot AI is a **functional local prototype**, developed for the JYSK take-home assignment.
 
-## Assignment attribution
+Potential improvements include persistent multi-user sessions, authenticated workbook storage, expanded spreadsheet compatibility, CI/CD deployment, and production-level LLM evaluation and monitoring.
 
-Developed as an **independent JYSK Senior AI Engineer take-home case study**. “JYSK” denotes the case-study context; SheetPilot AI is **not represented as an official JYSK product**.
+## 9. Assignment Summary
+
+**SheetPilot AI demonstrates an end-to-end agentic AI application**, combining LLM-based reasoning with validated tool execution, conversational interaction, Excel automation, interactive visualization, and workbook recovery.
+
+The objective is not simply to generate spreadsheet answers, but to build an AI assistant that can **safely execute useful spreadsheet operations while maintaining user control over changes**.
+
+---
+
+**Developed independently for the JYSK Senior AI Engineer take-home assignment.**
