@@ -7,6 +7,11 @@ It combines **Google Gemini, LangGraph, FastAPI, Streamlit, and Python-based Exc
 
 The key design principle is simple: **the LLM decides what to do, while deterministic Python tools perform the actual workbook operations.**
 
+## Application Preview
+
+![SheetPilot AI — Conversational Excel Assistant](docs/sheetpilot-demo.png)
+
+*SheetPilot AI demonstrating natural-language spreadsheet analysis, interactive visualization, and workbook editing.*
 ## 1. Key Features
 
 ### Conversational Excel Assistant
