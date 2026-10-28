@@ -66,7 +66,15 @@ The key design principle is simple: **the LLM decides what to do, while determin
 
 ## 3. System Architecture
 
-![SheetPilot AI Architecture](docs/architecture.svg)
+## System Architecture
+
+![SheetPilot AI — System Architecture and Workflow](docs/sheetpilot-architecture.png)
+
+The architecture separates AI-driven planning from deterministic Excel execution.
+
+**Workflow:** Streamlit → FastAPI → LangGraph → Gemini Planning → Tool Validation → Excel Operations → Workbook Versioning → Results.
+
+The system supports conversational spreadsheet analysis, Excel editing, interactive visualizations, error recovery, and Undo/Restore functionality.
 
 The agent follows a controlled execution workflow:
 
