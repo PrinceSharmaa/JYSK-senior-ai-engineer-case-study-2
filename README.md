@@ -232,6 +232,14 @@ The application also uses bounded retries and structured execution logs to suppo
 | Interactive charts | Makes analytical results immediately accessible |
 | FastAPI + Streamlit | Separates backend logic from the user interface |
 
+## AI Assistance, Engineering Practices & Assumptions
+
+**AI Assistance:** AI tools were used for technical research, selected code suggestions, debugging, and documentation refinement. AI-assisted contributions were reviewed through local execution and automated testing.
+
+**Engineering Practices:** The application follows a modular architecture using FastAPI, LangGraph, and deterministic Excel tools. Structured validation, bounded retries, transactional execution, logging, and workbook versioning were implemented to support reliability, maintainability, and recovery.
+
+**Assumptions:** The solution was designed as a local prototype using Gemini for natural-language planning and Python tools for spreadsheet operations. Local storage and conversation context were chosen for simplicity and reproducibility. Authentication, persistent multi-user storage, and cloud deployment remain future production considerations.
+
 ## 8. Limitations & Future Improvements
 
 SheetPilot AI is a **functional local prototype**, developed for the JYSK take-home assignment.
