@@ -1,5 +1,5 @@
 # SheetPilot AI
-### Agentic Excel Assistant | JYSK Senior AI Engineer Case Study — Task 2
+### Agentic Excel Assistant | 
 
 SheetPilot AI is a conversational Excel assistant that allows users to **analyze, visualize, and modify Excel workbooks using natural language**.
 
@@ -156,9 +156,9 @@ The assistant processes these requests through its supported tools and returns r
 Clone the repository:
 
 ```bash
-git clone https://github.com/PrinceSharmaa/JYSK-senior-ai-engineer-case-study-2.git
+git clone https://github.com/PrinceSharmaa/SheetPilotAI.git
 
-cd JYSK-senior-ai-engineer-case-study-2
+cd SheetPilotAI
 ```
 
 Install dependencies:
@@ -242,7 +242,8 @@ The application also uses bounded retries and structured execution logs to suppo
 
 ## 8. Limitations & Future Improvements
 
-SheetPilot AI is a **functional local prototype**, developed for the JYSK take-home assignment.
+SheetPilot AI is a **functional local prototype**.
+
 
 Potential improvements include persistent multi-user sessions, authenticated workbook storage, expanded spreadsheet compatibility, CI/CD deployment, and production-level LLM evaluation and monitoring.
 
@@ -254,4 +255,4 @@ The objective is not simply to generate spreadsheet answers, but to build an AI 
 
 ---
 
-**Developed independently for the JYSK Senior AI Engineer take-home assignment.**
+**Developed independently.**
